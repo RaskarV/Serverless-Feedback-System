@@ -1,0 +1,224 @@
+<!-- https://wlx0eaqq7k.execute-api.us-east-1.amazonaws.com/prod/feedback -->
+
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+<title>Feedback System</title>
+
+<style>
+body {
+    font-family: 'Segoe UI', sans-serif;
+    background: linear-gradient(135deg, #6a11cb, #2575fc);
+    margin: 0;
+}
+
+.container {
+    width: 420px;
+    margin: 60px auto;
+    background: white;
+    padding: 30px;
+    border-radius: 15px;
+    box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+}
+
+h2 {
+    text-align: center;
+    color: #333;
+}
+
+input, select, textarea {
+    width: 100%;
+    margin: 10px 0;
+    padding: 12px;
+    border-radius: 8px;
+    border: 1px solid #ccc;
+    transition: 0.3s;
+}
+
+input:focus, textarea:focus, select:focus {
+    border-color: #4facfe;
+    box-shadow: 0 0 5px #4facfe;
+    outline: none;
+}
+
+button {
+    width: 100%;
+    padding: 12px;
+    background: linear-gradient(135deg, hsl(269, 58%, 49%), #8e2de2);
+    color: white;
+    border: none;
+    border-radius: 8px;
+    margin-top: 10px;
+    cursor: pointer;
+    font-size: 15px;
+    transition: 0.3s;
+}
+
+button:hover {
+    transform: scale(1.05);
+    background: linear-gradient(135deg, #5f0fbf, #7b2cbf);
+}
+
+#error {
+    margin-top: 10px;
+    font-size: 14px;
+    text-align: center;
+}
+
+.card {
+    background: #f8f9ff;
+    margin-top: 15px;
+    padding: 15px;
+    border-radius: 10px;
+    box-shadow: 0 3px 10px rgba(0,0,0,0.1);
+}
+
+.actions button {
+    width: auto;
+    padding: 6px 12px;
+    margin-top: 8px;
+    margin-right: 5px;
+    font-size: 13px;
+}
+</style>
+</head>
+
+<body>
+
+<div class="container">
+
+<h2>✨ Feedback Form</h2>
+
+<input id="name" placeholder="Your Name">
+<input id="email" placeholder="Your Email">
+
+<select id="dept">
+<option value="">Select Department</option>
+<option>CE</option>
+<option>IT</option>
+<option>ENTC</option>
+<option>AIDS</option>
+<option>ECE</option>
+</select>
+
+<textarea id="message" placeholder="Your Feedback"></textarea>
+
+<button onclick="submitFeedback()">Submit 🚀</button>
+
+<div id="error"></div>
+
+<h3>📋 Feedbacks</h3>
+<div id="list"></div>
+
+</div>
+
+<script>
+
+const API = "https://wlx0eaqq7k.execute-api.us-east-1.amazonaws.com/prod/feedback";
+
+// LOAD
+async function load() {
+    const res = await fetch(API);
+    const data = await res.json();
+
+    const list = document.getElementById("list");
+    list.innerHTML = "";
+
+    data.forEach(item => {
+        list.innerHTML += `
+        <div class="card">
+        <b>${item.name}</b> (${item.email})<br>
+        Dept: ${item.dept}<br>
+        💬 ${item.message}
+        <div class="actions">
+        <button onclick="del('${item.id}')">🗑️ Delete</button>
+        <button onclick="edit('${item.id}')">✏️ Edit</button>
+        </div>
+        </div>`;
+    });
+}
+
+// SUBMIT
+async function submitFeedback() {
+
+    const name = document.getElementById("name").value.trim();
+    const email = document.getElementById("email").value.trim();
+    const dept = document.getElementById("dept").value;
+    const msg = document.getElementById("message").value.trim();
+    const error = document.getElementById("error");
+
+    error.innerText = "";
+
+    const emailPattern = /^[^ ]+@[^ ]+\.[a-z]{2,3}$/;
+
+    if (!name || !email || !dept || !msg) {
+        error.style.color = "red";
+        error.innerText = "⚠️ All fields are required!";
+        return;
+    }
+
+    if (!emailPattern.test(email)) {
+        error.style.color = "red";
+        error.innerText = "⚠️ Invalid email!";
+        return;
+    }
+
+    await fetch(API, {
+        method: "POST",
+        headers: {"Content-Type":"application/json"},
+        body: JSON.stringify({ name, email, dept, message: msg })
+    });
+
+    error.style.color = "green";
+    error.innerText = "✅ Feedback submitted!";
+
+    load();
+}
+
+// DELETE
+async function del(id) {
+    console.log("Deleting:", id); // debug
+
+    await fetch(API + "?id=" + encodeURIComponent(id), {
+        method: "DELETE"
+    });
+
+    load();
+}
+
+// EDIT
+
+async function edit(id) {
+
+const name = prompt("Enter name:");
+const email = prompt("Enter email:");
+const dept = prompt("Enter department:");
+const msg = prompt("Enter feedback:");
+
+if (!name || !email || !dept || !msg) {
+    alert("All fields required!");
+    return;
+}
+
+await fetch(API, {
+    method:"PUT",
+    headers: {"Content-Type":"application/json"},
+    body: JSON.stringify({
+        id,
+        name,
+        email,
+        dept,
+        message: msg
+    })
+});
+
+load();
+}
+
+load();
+
+</script>
+
+</body>
+</html>
